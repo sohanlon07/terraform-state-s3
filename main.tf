@@ -2,6 +2,19 @@ provider "aws" {
     region = "us-east-2"
 }
 
+
+terraform {
+  backend "s3" {
+    bucket = "terraform-state-file-storage-sohan"
+    key  = "global/s3/terraform.tfstate"
+    region = "us-east-2"
+
+    dynamodb_table = "terraform-state-file-storage-sohan-locks"
+    encrypt = true
+  }
+
+}
+
 resource "aws_s3_bucket" "terraform_state"  {
     bucket = "terraform-state-file-storage-sohan"
 
@@ -10,7 +23,6 @@ resource "aws_s3_bucket" "terraform_state"  {
         prevent_destroy = true
     }
 }
-
 
 # Enable versioning so full revision history exists for state file
 resource "aws_s3_bucket_versioning" "enabled" {
@@ -49,4 +61,14 @@ resource "aws_dynamodb_table" "terraform_locks" {
       name = "LockID"
       type = "S"
     }
+}
+
+output "s3_bucket_arn" {
+    value = aws_s3_bucket.terraform_state.arn
+    description = "The ARN of the S3 Bucket"
+}
+
+output "dynamodb_table_name" {
+    value = aws_dynamodb_table.terraform_locks.name
+    description = "The name of the DynamoDB Table"
 }
